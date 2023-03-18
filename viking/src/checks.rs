@@ -178,7 +178,6 @@ pub struct FunctionChecker<'a, 'functions, 'orig_elf, 'decomp_elf> {
     known_functions: FxHashMap<u64, &'functions functions::Info>,
 
     pub orig_elf: &'orig_elf elf::OwnedElf,
-    orig_got_section: &'orig_elf goblin::elf::SectionHeader,
 }
 
 impl<'a, 'functions, 'orig_elf, 'decomp_elf>
@@ -196,7 +195,6 @@ impl<'a, 'functions, 'orig_elf, 'decomp_elf>
         known_data_symbols.load(get_data_symbol_csv_path(version)?.as_path(), decomp_symtab)?;
 
         let known_functions = functions::make_known_function_map(functions);
-        let orig_got_section = elf::find_section(orig_elf, ".got")?;
 
         Ok(FunctionChecker {
             decomp_elf,
@@ -208,7 +206,6 @@ impl<'a, 'functions, 'orig_elf, 'decomp_elf>
             known_functions,
 
             orig_elf,
-            orig_got_section,
         })
     }
 
@@ -475,9 +472,6 @@ impl<'a, 'functions, 'orig_elf, 'decomp_elf>
         orig_addr_ptr: u64,
         decomp_addr_ptr: u64,
     ) -> Option<MismatchCause> {
-        if !elf::is_in_section(self.orig_got_section, orig_addr_ptr, 8) {
-            return None;
-        }
 
         let orig_addr = u64::from_le_bytes(
             elf::get_elf_bytes(self.orig_elf, orig_addr_ptr, 8)
